@@ -1,6 +1,6 @@
 # some vtk libs depend on python.
 # correct this dependency and make it point to local python.
-import glob2
+import glob
 import subprocess
 import shlex
 import os
@@ -16,13 +16,14 @@ PATH = sys.argv[1] + "/Contents/Frameworks"
 CMD = "jpsvis"
 # PATH = "./bin/%s.app/Contents/Frameworks"  % CMD
 # PATH = "/Volumes/jpsvis\ 0.7.0/jpsvis.app/Contents/Frameworks/"
-dependencies = glob2.glob("%s/**/*.dylib"%PATH)
+dependencies = glob.glob("%s/**/*.dylib"%PATH)
 
+print("VTK dependencies: ", len(dependencies))
 
 #VTK_LIBS
 for vtklib in dependencies:
-    
-    print "lib: <%s>" % vtklib
+
+    print("lib: <%s>" % vtklib)
 
     cmd = "otool -L %s" % vtklib
     f = open("blah.txt", "w")
@@ -36,13 +37,13 @@ for vtklib in dependencies:
            and not line.startswith("/System") \
            and not line.startswith("@executable_path"):
 
-            print "%s >> <%s> %s" % (RED, line.split()[0], NC)
+            print("%s >> <%s> %s" %(RED, line.split()[0], NC))
             change = "install_name_tool -change %s @executable_path/../Frameworks/Python.framework/Versions/3.5/Python %s"%(line.split()[0], vtklib)
-            print "<%s>" % change
+            print("<%s>" % change)
             res = subprocess.call(shlex.split(change))
-            raw_input("pause ...")
-            
+            input("pause ...")
+
     f.close()
 
-if os.path.exists ("blah.txt"):
-    os.remove("blah.txt")    
+if os.path.exists("blah.txt"):
+    os.remove("blah.txt")
