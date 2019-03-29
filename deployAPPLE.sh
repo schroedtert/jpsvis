@@ -31,7 +31,7 @@ echo "INFO: make .."
 make -j4
 
 
-echo "INFO: running  <dylibbundler -od -b -x ../bin/${CMD}.app/Contents/MacOS/${CMD} -d ../bin/${CMD}.app/Contents/libs/>"
+# echo "INFO: running  <dylibbundler -od -b -x ../bin/${CMD}.app/Contents/MacOS/${CMD} -d ../bin/${CMD}.app/Contents/libs/>"
 dylibbundler -od -b -x ../bin/${CMD}.app/Contents/MacOS/${CMD} -d ../bin/${CMD}.app/Contents/libs/
 
 
@@ -51,8 +51,15 @@ if [[ -n $isPythonDependencyGlobal ]];then
 
         Frameworks=`echo ${Python} |  awk -F Frameworks '{ print "Frameworks"$2 }'`
         echo "WARNING: ${RED} change <$Python> to <@executable_path/../$Frameworks> ${CMD} ${NC}."
+        echo "cp `dirname ${Python}`"
+        echo "in ../bin/jpsvis.app/Contents/${Framworks}"
+        destination=`echo ${p} |  awk -F Frameworks '{ print $1"Frameworks" }'`
+        # todo: this python stuff is hard coded yet!
+        mkdir -p ../bin/jpsvis.app/Contents/Frameworks/Python.framework/Versions
+        cp -r `dirname ${Python}` ../bin/jpsvis.app/Contents/Frameworks/Python.framework/Versions
 
-        install_name_tool -change $Python @executable_path/../$Frameworks ../bin/${CMD}.app/Contents/MacOS/${CMD}
+
+        install_name_tool -change $Python @executable_path/../Frameworks/Python.framework/Versions/3.7/Python ../bin/${CMD}.app/Contents/MacOS/${CMD}
 
         echo "INFO: Check again"
         otool -L ../bin/${CMD}.app/Contents/MacOS/${CMD} | grep Python.framework
@@ -64,5 +71,10 @@ fi
 cd ..
 # check if dependencies to libs are local to .app
 python checkDependencies.py bin/jpsvis.app/
+
+# qt dependencies
+python fixQtdependency.py
+
+# because of https://github.com/auriamg/macdylibbundler/issues/12
 
 appdmg Resources/dmg.json ${CMD}-${VERSION}.dmg
