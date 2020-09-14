@@ -7,10 +7,11 @@
 #windows flags: -DDESIRED_QT_VERSION=5 -DCMAKE_PREFIX_PATH=D:\Qt32bit\Qt5.4.1\5.4\msvc2013 -DCMAKE_PREFIX_PATH=VTK.0.0\VTK-7.0.0\build -G "Visual Studio 12 2013"
 #--------------------------------------------------------------------------
 cmake_minimum_required(VERSION 3.2)
-project( jpsvis LANGUAGES CXX)
+project( jpsvis LANGUAGES CXX VERSION 0.8.2)
 IF(APPLE)
   cmake_policy(SET CMP0025 NEW) #fixes error No known features for CXX compiler (on mac)
 ENDIF(APPLE)
+set(CMAKE_MODULE_PATH "${CMAKE_SOURCE_DIR}/cmake_modules")
 
 MESSAGE( STATUS "System ........................................ ${CMAKE_SYSTEM_NAME} (${CMAKE_SYSTEM_VERSION}, ${CMAKE_SYSTEM_PROCESSOR})" )
 
@@ -393,13 +394,34 @@ IF(WIN32)
 ENDIF(WIN32)
 
 add_definitions("-DUSED_COMPILER=\"${USED_COMPILER}\"")
-#--------------------------------------------------------------------------------
-# Install the QtTest application, on Apple, the bundle is at the root of the
-# install tree, and on other platforms it'll go into the bin directory.
-INSTALL(TARGETS jpsvis
-  BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX} COMPONENT Runtime
-  RUNTIME DESTINATION bin COMPONENT Runtime
-  )
+
+#####################################################
+# Installer                                         #
+#####################################################
+include(install_helper)
+
+# https://github.com/artm/vision-ui-skeleton/blob/master/cmake/QArtmRelease.cmake
+ # IF(APPLE)
+#   SET(EXE_CONTENTS "${CMAKE_INSTALL_PREFIX}/${EXECUTABLE}/Contents")
+#   FILE(WRITE
+#     ${EXE_CONTENTS}/Resources/qt.conf
+#     "[Paths]\nPlugins=PlugIns\n")
+#   FILE(COPY ${QT_PLUGINS_DIR}/imageformats
+#     DESTINATION ${EXE_CONTENTS}/PlugIns/
+#     PATTERN "*_debug.*" EXCLUDE)
+#   ADD_CUSTOM_COMMAND(
+#     TARGET ${PROJECT_NAME} POST_BUILD
+#     COMMAND ruby ${PROJECT_SOURCE_DIR}/ruby/fixup/fixup.rb ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE}
+#     COMMENT "Fixing up the app bundle")
+# ENDIF(APPLE)
+
+##--------------------------------------------------------------------------------
+## Install the QtTest application, on Apple, the bundle is at the root of the
+## install tree, and on other platforms it'll go into the bin directory.
+#INSTALL(TARGETS jpsvis
+#        BUNDLE DESTINATION ${CMAKE_INSTALL_PREFIX} COMPONENT Runtime
+#        RUNTIME DESTINATION bin COMPONENT Runtime
+#        )
 
 
 #--------------------------------------------------------------------------------
@@ -470,28 +492,28 @@ if(APPLE)
   set(CPACK_DMG_VOLUME_NAME "${PROJECT_NAME}")
   set(CPACK_SYSTEM_NAME "OSX")
   set(CPACK_PACKAGE_FILE_NAME "${PROJECT_NAME}-${JPSVIS_VERSION}")
-   elseif(UNIX)
-     # tested with success in
-     # Linux dhcppc5 3.2.0-4-686-pae #1 SMP Debian 3.2.68-1+deb7u2 i686 GNU/Linux
-     set(CPACK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
-       SET(CPACK_GENERATOR "DEB")
+elseif(UNIX)
+  # tested with success in
+  # Linux dhcppc5 3.2.0-4-686-pae #1 SMP Debian 3.2.68-1+deb7u2 i686 GNU/Linux
+  set(CPACK_SYSTEM_NAME "${CMAKE_SYSTEM_NAME}-${CMAKE_SYSTEM_PROCESSOR}")
+  SET(CPACK_GENERATOR "DEB")
 
-       SET(CPACK_PACKAGE_DESCRIPTION "Visualisation module for JuPedSim")
-       SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Visualisation module for  JuPedSim, a framework for simulation and analysis of pedestrian dynamics")
-       #SET(CPACK_PACKAGE_VENDOR "nowardev")
-       SET(CPACK_PACKAGE_CONTACT "m.chraibi@fz-juelich.de")
-       SET(CPACK_PACKAGE_VERSION_MAJOR "${JPSVIS_MAJOR_VERSION}")
-       SET(CPACK_PACKAGE_VERSION_MINOR "${JPSVIS_MINOR_VERSION}")
-       SET(CPACK_PACKAGE_VERSION_PATCH "${JPSVIS_PATCH_VERSION}")
-       SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${JPSVIS_VERSION}")
-       SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${JPSVIS_VERSION}")
-       #SET(CPACK_DEBIAN_PACKAGE_DEPENDS " Boost (>= 1.59) ")
-       SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
-       SET( CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://jupedsim.org")
-       SET(CPACK_DEBIAN_PACKAGE_SUGGESTS, "jpseditor, jpsreport, jpscore")
-       SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
-       SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
-       SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
+  SET(CPACK_PACKAGE_DESCRIPTION "Visualisation module for JuPedSim")
+  SET(CPACK_PACKAGE_DESCRIPTION_SUMMARY "Visualisation module for  JuPedSim, a framework for simulation and analysis of pedestrian dynamics")
+  #SET(CPACK_PACKAGE_VENDOR "nowardev")
+  SET(CPACK_PACKAGE_CONTACT "m.chraibi@fz-juelich.de")
+  SET(CPACK_PACKAGE_VERSION_MAJOR "${JPSVIS_MAJOR_VERSION}")
+  SET(CPACK_PACKAGE_VERSION_MINOR "${JPSVIS_MINOR_VERSION}")
+  SET(CPACK_PACKAGE_VERSION_PATCH "${JPSVIS_PATCH_VERSION}")
+  SET(CPACK_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${JPSVIS_VERSION}")
+  SET(CPACK_SOURCE_PACKAGE_FILE_NAME "${CMAKE_PROJECT_NAME}_${JPSVIS_VERSION}")
+  #SET(CPACK_DEBIAN_PACKAGE_DEPENDS " Boost (>= 1.59) ")
+  SET(CPACK_DEBIAN_PACKAGE_SHLIBDEPS ON)
+  SET( CPACK_DEBIAN_PACKAGE_HOMEPAGE "http://jupedsim.org")
+  SET(CPACK_DEBIAN_PACKAGE_SUGGESTS, "jpseditor, jpsreport, jpscore")
+  SET(CPACK_DEBIAN_PACKAGE_PRIORITY "optional")
+  SET(CPACK_DEBIAN_PACKAGE_SECTION "science")
+  SET(CPACK_DEBIAN_ARCHITECTURE ${CMAKE_SYSTEM_PROCESSOR})
 
 
 endif()
@@ -511,22 +533,8 @@ include(InstallRequiredSystemLibraries)
 if(APPLE)
   set(EXECUTABLE "${PROJECT_NAME}.app")
 elseif(WIN32)
-    set(EXECUTABLE "${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
+  set(EXECUTABLE "${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
 else()
-    set(EXECUTABLE "${BIN_INSTALL_DIR}/${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
+  set(EXECUTABLE "${BIN_INSTALL_DIR}/${PROJECT_NAME}${CMAKE_EXECUTABLE_SUFFIX}")
 endif()
 
-# https://github.com/artm/vision-ui-skeleton/blob/master/cmake/QArtmRelease.cmake
- # IF(APPLE)
-#   SET(EXE_CONTENTS "${CMAKE_INSTALL_PREFIX}/${EXECUTABLE}/Contents")
-#   FILE(WRITE
-#     ${EXE_CONTENTS}/Resources/qt.conf
-#     "[Paths]\nPlugins=PlugIns\n")
-#   FILE(COPY ${QT_PLUGINS_DIR}/imageformats
-#     DESTINATION ${EXE_CONTENTS}/PlugIns/
-#     PATTERN "*_debug.*" EXCLUDE)
-#   ADD_CUSTOM_COMMAND(
-#     TARGET ${PROJECT_NAME} POST_BUILD
-#     COMMAND ruby ${PROJECT_SOURCE_DIR}/ruby/fixup/fixup.rb ${CMAKE_INSTALL_PREFIX}/${EXECUTABLE}
-#     COMMENT "Fixing up the app bundle")
-# ENDIF(APPLE)
