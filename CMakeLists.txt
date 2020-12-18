@@ -210,7 +210,12 @@ else(VTK_FOUND)
   message(FATAL_ERROR "Check VTK ..................................... no")
 endif(VTK_FOUND)
 
-include(${VTK_USE_FILE})
+if (${VTK_VERSION} VERSION_LESS "9.0")
+  include(${VTK_USE_FILE})
+else()
+  vtk_module_autoinit(TARGETS jpsvis MODULES ${VTK_LIBRARIES})
+endif()
+
 # Instruct CMake to run moc automatically when needed.
 set(CMAKE_AUTOMOC ON)
 
