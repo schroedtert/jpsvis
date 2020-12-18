@@ -36,7 +36,7 @@
 #include <QString>
 #include <QObject>
 #include <QMessageBox>
-
+#include <vtkTextActor.h>
 // we don't need this when compiling with cmake
 // http://www.vtk.org/Wiki/VTK/VTK_6_Migration/Factories_now_require_defines
 // all modules need to be initialized in vtk6
